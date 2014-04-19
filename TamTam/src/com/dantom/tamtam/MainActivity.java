@@ -16,7 +16,7 @@ public class MainActivity extends Activity {
         b2.setOnClickListener(new TamTamClickListener(R.raw.bongo_2, MainActivity.this));
         Button b3 = (Button) this.findViewById(R.id.button3);
         b3.setOnClickListener(new TamTamClickListener(R.raw.bongo_3, MainActivity.this));
-        Button b4 = (Button) this.findViewById(R.id.Button01);
+        Button b4 = (Button) this.findViewById(R.id.button4);
         b4.setOnClickListener(new TamTamClickListener(R.raw.bongo_4, MainActivity.this));
     }
 

@@ -8,9 +8,9 @@
         android:targetSdkVersion="15" />
 
     <application
-        android:icon="@drawable/ic_launcher"
+        android:icon="@drawable/tamtam_icon"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme" >
+        android:theme="@style/AppTheme" android:logo="@drawable/tamtam_icon">
         <activity
             android:name=".MainActivity"
             android:label="@string/title_activity_main" >
