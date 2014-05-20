@@ -7,10 +7,14 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.video.BackgroundSubtractorMOG2;
+import org.opencv.video.Video;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.hardware.Camera;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -19,7 +23,8 @@ import android.view.SurfaceView;
 import android.view.WindowManager;
 import android.widget.Toast;
 
-public class Tutorial1Activity extends Activity implements CvCameraViewListener2 {
+@SuppressLint("NewApi")
+public class Tutorial1Activity extends Activity {
     private static final String TAG = "OCVSample::Activity";
 
     private CameraBridgeViewBase mOpenCvCameraView;
@@ -62,8 +67,14 @@ public class Tutorial1Activity extends Activity implements CvCameraViewListener2
             mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.tutorial1_activity_native_surface_view);
 
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
-
-        mOpenCvCameraView.setCvCameraViewListener(this);
+        
+//        Camera cam = Camera.open(Camera.CameraInfo.CAMERA_FACING_FRONT);
+//        
+//        mOpenCvCameraView.setMinimumHeight(cam.getParameters().getSupportedPreviewSizes().get(1).height);
+//        mOpenCvCameraView.setMinimumWidth(cam.getParameters().getSupportedPreviewSizes().get(1).width);
+//        Log.i("ast", cam.getParameters().getSupportedPreviewSizes().toString());
+        
+        mOpenCvCameraView.setCvCameraViewListener(new ImgHandlerSimple());
     }
 
     @Override
@@ -112,7 +123,7 @@ public class Tutorial1Activity extends Activity implements CvCameraViewListener2
             }
 
             mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
-            mOpenCvCameraView.setCvCameraViewListener(this);
+            mOpenCvCameraView.setCvCameraViewListener(new ImgHandler());
             mOpenCvCameraView.enableView();
             Toast toast = Toast.makeText(this, toastMesage, Toast.LENGTH_LONG);
             toast.show();
@@ -121,17 +132,5 @@ public class Tutorial1Activity extends Activity implements CvCameraViewListener2
         return true;
     }
 
-    public void onCameraViewStarted(int width, int height) {
-    }
-
-    public void onCameraViewStopped() {
-    }
-
-    public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
-        // return inputFrame.rgba();
-    	a=inputFrame.gray();
-//    	Core.flip(a, a, 1);
-    	return a;
-    }
-    Mat a;
+    
 }
