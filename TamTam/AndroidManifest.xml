@@ -11,7 +11,7 @@
         android:logo="@drawable/tamtam_icon"
         android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
         <activity
-            android:name="Tutorial1Activity"
+            android:name="TamTamMainActivity"
             android:label="@string/app_name"
             android:screenOrientation="landscape"
             android:configChanges="keyboardHidden|orientation" >

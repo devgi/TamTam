@@ -14,11 +14,13 @@ import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.imgproc.Moments;
+import org.opencv.video.BackgroundSubtractor;
+import org.opencv.video.BackgroundSubtractorMOG;
 
 import android.content.Context;
 import android.util.Log;
 
-public class ImgHandlerTresh implements CvCameraViewListener2 {
+public class ImgHandlerTreshNew implements CvCameraViewListener2 {
 
 	final static String TAG = "tam";
 	private static final double CONTOUR_SIZE_DIFF_TRESHOLD = 150;
@@ -32,12 +34,14 @@ public class ImgHandlerTresh implements CvCameraViewListener2 {
 	private boolean[] directions = {false, false};
 	
 	private Scalar[] colors = {new Scalar(0,0,255,0), new Scalar(255,0,0,0)};
+	private BackgroundSubtractor bgfg;
 	
-	public ImgHandlerTresh(Context c){
+	public ImgHandlerTreshNew(Context c){
 		this.c = c;
 	}
 	
 	public void onCameraViewStarted(int width, int height) {
+		bgfg = new BackgroundSubtractorMOG();
     }
 	
     public void onCameraViewStopped() {
@@ -73,6 +77,14 @@ public class ImgHandlerTresh implements CvCameraViewListener2 {
     	
 		List<MatOfPoint> allContours = new ArrayList<MatOfPoint>();
 		Mat tempMat = new Mat();
+				
+		Mat toShow = result.clone();
+		Imgproc.cvtColor(toShow, toShow, Imgproc.COLOR_GRAY2RGBA);
+		
+		Mat fgmask = new Mat();
+		bgfg.apply(result, fgmask);
+		fgmask = result;
+		
 		Imgproc.findContours(result, allContours  , tempMat  , Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
 		Log.i(TAG, "counters " + allContours.size());
 		
@@ -128,18 +140,18 @@ public class ImgHandlerTresh implements CvCameraViewListener2 {
 		}
 		
 		if (contours[0] != null) {
-			drawContour(contours[0],smallFrame, 0);
+			drawContour(contours[0],toShow, 0);
 		} else {
 			sizes[0] = 0;
 		}
 		if (contours[1] != null) {
-			drawContour(contours[1],smallFrame, 1);
+			drawContour(contours[1],toShow, 1);
 		} else {
 			sizes[1] = 0;
 		}
 		
 		Log.i(TAG, "max area " + maxArea );
-        Imgproc.resize(smallFrame, frameRGBA, origFrameSize);
+        Imgproc.resize(toShow, frameRGBA, origFrameSize);
     }
 
 	private void drawContour(MatOfPoint contour, Mat smallFrame, int handIndex) {

@@ -6,6 +6,9 @@ import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Scalar;
 
+import android.content.Context;
+import android.util.Log;
+
 public class ImgHandlerSimple implements CvCameraViewListener2 {
 
 	final static String TAG = "tam";
@@ -16,11 +19,14 @@ public class ImgHandlerSimple implements CvCameraViewListener2 {
 	Mat result;
 	int cnt = 0;
 	double lastMean = 0;
-	boolean douwn = false;
+	boolean down = false;
+	
+	//for playing sound
+	private Context context;
 	
 	
-	public ImgHandlerSimple() {
-		
+	public ImgHandlerSimple(Context context) {
+		this.context = context;
 	}
 	
 	
@@ -43,6 +49,16 @@ public class ImgHandlerSimple implements CvCameraViewListener2 {
     		Core.subtract(inputFrame.gray(), firstFrame, result);
     		Scalar newMean = Core.mean(result);
     		double newMeanVal = newMean.val[0];
+    		if (5 < newMeanVal - lastMean) {
+    			down=true;
+    		} else if(newMeanVal < lastMean) {
+    			if (down) {
+    				Utils.PlaySound(R.raw.bongo_1, context);
+    				down = false;
+    			}
+    		}
+    		Log.d("tamMean","mean " + newMeanVal);
+    		lastMean = newMeanVal;
     		return result;
     	}
     }

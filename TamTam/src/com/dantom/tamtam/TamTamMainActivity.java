@@ -1,20 +1,14 @@
 package com.dantom.tamtam;
 
 import org.opencv.android.BaseLoaderCallback;
-import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
+import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
-import org.opencv.core.Core;
-import org.opencv.core.Mat;
-import org.opencv.imgproc.Imgproc;
-import org.opencv.video.BackgroundSubtractorMOG2;
-import org.opencv.video.Video;
-import org.opencv.android.CameraBridgeViewBase;
-import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.hardware.Camera;
+import android.hardware.Camera.Parameters;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -24,7 +18,7 @@ import android.view.WindowManager;
 import android.widget.Toast;
 
 @SuppressLint("NewApi")
-public class Tutorial1Activity extends Activity {
+public class TamTamMainActivity extends Activity {
     private static final String TAG = "OCVSample::Activity";
 
     private CameraBridgeViewBase mOpenCvCameraView;
@@ -48,7 +42,7 @@ public class Tutorial1Activity extends Activity {
         }
     };
 
-    public Tutorial1Activity() {
+    public TamTamMainActivity() {
         Log.i(TAG, "Instantiated new " + this.getClass());
     }
 
@@ -69,12 +63,15 @@ public class Tutorial1Activity extends Activity {
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         
 //        Camera cam = Camera.open(Camera.CameraInfo.CAMERA_FACING_FRONT);
-//        
+//        Camera.Parameters params = cam.getParameters();
+//        params.setAutoExposureLock(true);
+//        cam.setParameters(params);
+//       
 //        mOpenCvCameraView.setMinimumHeight(cam.getParameters().getSupportedPreviewSizes().get(1).height);
 //        mOpenCvCameraView.setMinimumWidth(cam.getParameters().getSupportedPreviewSizes().get(1).width);
 //        Log.i("ast", cam.getParameters().getSupportedPreviewSizes().toString());
-        
-        mOpenCvCameraView.setCvCameraViewListener(new ImgHandlerSimple());
+//        new ImgHandlerSimple(Tutorial1Activity.this)
+        mOpenCvCameraView.setCvCameraViewListener(new ImgHandlerTresh(TamTamMainActivity.this));
     }
 
     @Override
