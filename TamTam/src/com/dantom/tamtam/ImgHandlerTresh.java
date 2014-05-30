@@ -98,68 +98,46 @@ public class ImgHandlerTresh implements CvCameraViewListener2 {
     	Log.d(TAG, "tresh");
     	Imgproc.threshold(result, result, 0, 255, Imgproc.THRESH_BINARY_INV + Imgproc.THRESH_OTSU);
     	
-		List<MatOfPoint> allContours = new ArrayList<MatOfPoint>();
-		Mat tempMat = new Mat();
-		Imgproc.findContours(result, allContours  , tempMat  , Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
-		Log.i(TAG, "counters " + allContours.size());
-		
-		double maxArea = 0;
-		double maxArea1 = 0;
-		double area = 0;
-		MatOfPoint maxCnt = null;
-		MatOfPoint maxCnt1 = null;
-		
-		//Finding the 2 largest contours
-		for (MatOfPoint cnt : allContours) {
-			area = Imgproc.contourArea(cnt);
-			if (area > maxArea1 && area < 5000 && area > 170) {
-				if (area > maxArea){
-					maxArea1 = maxArea;
-					maxCnt1 = maxCnt;
-					maxArea = area;
-					maxCnt = cnt;
-				} else {
-					maxArea1 = area;
-					maxCnt1 = cnt;
-				}
-			}
-		}
-		
-		Log.i(TAG+"-size:", ""+maxArea);
+		MatOfPoint maxCnt[] = find2LargestContours(result);
 		
 		MatOfPoint[] contours = new MatOfPoint[2];
 		
-		if (maxCnt  != null) {
-			Moments p = Imgproc.moments(maxCnt);
-			int x = (int) (p.get_m10() / p.get_m00());
-	        int w = smallFrame.width();
-	        if (x < w/2) {
-	        	contours[0] = maxCnt;
-	        	updateHand(maxArea,0);
-	        } else {
-	        	contours[1] = maxCnt;
-	        	updateHand(maxArea,1);
-	        }
-		}
-		if (maxCnt1  != null) {
-			Moments p = Imgproc.moments(maxCnt1);
-			int x = (int) (p.get_m10() / p.get_m00());
-	        int w = smallFrame.width();
-	        if (x < w/2) {
-        		contours[0] = maxCnt1;
-        		updateHand(maxArea1, 0);
-	        } else {
-	        	contours[1] = maxCnt1;
-	        	updateHand(maxArea1, 1);
-	        }
-		}
+		updateHands(smallFrame, maxCnt, contours);
 		
 		drawContours(smallFrame, contours);
 		
-		Log.i(TAG, "max area " + maxArea );
-		
         imageResizer.rescaleImage(smallFrame, frameRGBA);
     }
+
+	private void updateHands(Mat smallFrame, MatOfPoint[] maxCnt,
+			MatOfPoint[] contours) {
+		if (maxCnt[0]  != null) {
+			double area = Imgproc.contourArea(maxCnt[0]);
+			Moments p = Imgproc.moments(maxCnt[0]);
+			int x = (int) (p.get_m10() / p.get_m00());
+	        int w = smallFrame.width();
+	        if (x < w/2) {
+	        	contours[0] = maxCnt[0];
+	        	updateHand(area,0);
+	        } else {
+	        	contours[1] = maxCnt[0];
+	        	updateHand(area,1);
+	        }
+		}
+		if (maxCnt[1]  != null) {
+			double area = Imgproc.contourArea(maxCnt[1]);
+			Moments p = Imgproc.moments(maxCnt[1]);
+			int x = (int) (p.get_m10() / p.get_m00());
+	        int w = smallFrame.width();
+	        if (x < w/2) {
+        		contours[0] = maxCnt[1];
+        		updateHand(area, 0);
+	        } else {
+	        	contours[1] = maxCnt[1];
+	        	updateHand(area, 1);
+	        }
+		}
+	}
 
 	private void drawContours(Mat frame, MatOfPoint[] contours) {
 		if (contours[0] != null) {
@@ -197,6 +175,34 @@ public class ImgHandlerTresh implements CvCameraViewListener2 {
     		}
     		sizes[i] = maxArea;
     	}
+	}
+	
+	private MatOfPoint[] find2LargestContours(Mat frame) {
+		List<MatOfPoint> allContours = new ArrayList<MatOfPoint>();
+		Mat tempMat = new Mat();
+		Imgproc.findContours(frame, allContours  , tempMat  , Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
+		Log.i(TAG, "counters " + allContours.size());
+		
+		double[] maxArea =  new double[2];
+		double area = 0;
+		MatOfPoint[] maxCnt = new MatOfPoint[2];
+		
+		//Finding the 2 largest contours
+		for (MatOfPoint cnt : allContours) {
+			area = Imgproc.contourArea(cnt);
+			if (area > maxArea[1] && area < 5000 && area > 170) {
+				if (area > maxArea[0]){
+					maxArea[1] = maxArea[0];
+					maxCnt[1] = maxCnt[0];
+					maxArea[0] = area;
+					maxCnt[0] = cnt;
+				} else {
+					maxArea[1] = area;
+					maxCnt[1] = cnt;
+				}
+			}
+		}
+		return maxCnt;
 	}
 
 }
