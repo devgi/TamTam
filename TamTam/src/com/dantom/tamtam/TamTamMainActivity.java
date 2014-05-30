@@ -95,12 +95,12 @@ public class TamTamMainActivity extends Activity {
             mOpenCvCameraView.disableView();
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        Log.i(TAG, "called onCreateOptionsMenu");
-        mItemSwitchCamera = menu.add("Toggle Native/Java camera");
-        return true;
-    }
+//    @Override
+//    public boolean onCreateOptionsMenu(Menu menu) {
+//        Log.i(TAG, "called onCreateOptionsMenu");
+//        mItemSwitchCamera = menu.add("Toggle Native/Java camera");
+//        return true;
+//    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {

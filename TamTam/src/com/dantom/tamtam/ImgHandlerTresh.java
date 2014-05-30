@@ -18,48 +18,75 @@ import org.opencv.imgproc.Moments;
 import android.content.Context;
 import android.util.Log;
 
+/**
+ * This class is using threshold to detect hands,  and find the moment of impact(with the virtual drum) 
+ * by calculating the size of each hand.
+ */
 public class ImgHandlerTresh implements CvCameraViewListener2 {
-
-	final static String TAG = "tam";
-	private static final double CONTOUR_SIZE_DIFF_TRESHOLD = 150;
-	private Mat frameRGBA;
-	int[] drums = {R.raw.bongo_1,R.raw.bongo_2};
 	
+	// The tag of the logging of this class
+	final static String TAG = "tam";
+	
+	//The minimal diff in hand size, before updating the hand size.
+	private static final double CONTOUR_SIZE_DIFF_TRESHOLD = 150;
+	
+	// The frame took from the camera
+	private Mat frameRGBA;
+	
+	// The sounds the drums will make
+	private int[] drums = {R.raw.bongo_1,R.raw.bongo_2};
+	
+	// The context of the main activity, used to play the drum sounds.
 	private Context c;
 
+	// This array uses to save the hands sizes between to different frames.
 	private double[] sizes = {0, 0};
-	//true is down
+	
+	// This array is used to save the current direction of each hand, true means down.
 	private boolean[] directions = {false, false};
 	
+	// This is the array of colors for each hand contour.
 	private Scalar[] colors = {new Scalar(0,0,255,0), new Scalar(255,0,0,0)};
+
+	/** The image resizer. */
+	private ImageResizer imageResizer;
 	
+	/**
+	 * Constructor.
+	 * 
+	 * @param c The context of the main activity, used to play the drum sounds.
+	 */
 	public ImgHandlerTresh(Context c){
 		this.c = c;
 	}
 	
 	public void onCameraViewStarted(int width, int height) {
+		this.imageResizer = new ImageResizer(10, new Size(width, height));
     }
 	
     public void onCameraViewStopped() {
+    	// not in use
     }
 
+    /**
+     * This method is called when there is a new frame.
+     * 
+     * @see org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2#onCameraFrame(org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame)
+     */
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
-    	frameRGBA=inputFrame.rgba();
+    	frameRGBA = inputFrame.rgba();
+    	
     	manipulation();
+    	
     	return frameRGBA;
     }
     
-   
     
     private void manipulation(){
     	Log.d(TAG, "start maninpulation");
-
-    	// resize the image
-    	Size origFrameSize = frameRGBA.size();
-    	int shrinkFactor = 10; 
-    	Size newFrameSize = new Size(frameRGBA.width() / shrinkFactor, frameRGBA.height() / shrinkFactor);
+    	
     	Mat smallFrame = new Mat();
-		Imgproc.resize(frameRGBA, smallFrame , newFrameSize, 0, 0, Imgproc.INTER_NEAREST);
+    	imageResizer.shrinkImage(frameRGBA, smallFrame);
     	Core.flip(smallFrame, smallFrame, 1);
     	
     	Mat result = new Mat();
@@ -127,20 +154,25 @@ public class ImgHandlerTresh implements CvCameraViewListener2 {
 	        }
 		}
 		
+		drawContours(smallFrame, contours);
+		
+		Log.i(TAG, "max area " + maxArea );
+		
+        imageResizer.rescaleImage(smallFrame, frameRGBA);
+    }
+
+	private void drawContours(Mat frame, MatOfPoint[] contours) {
 		if (contours[0] != null) {
-			drawContour(contours[0],smallFrame, 0);
+			drawContour(contours[0],frame, 0);
 		} else {
 			sizes[0] = 0;
 		}
 		if (contours[1] != null) {
-			drawContour(contours[1],smallFrame, 1);
+			drawContour(contours[1],frame, 1);
 		} else {
 			sizes[1] = 0;
 		}
-		
-		Log.i(TAG, "max area " + maxArea );
-        Imgproc.resize(smallFrame, frameRGBA, origFrameSize);
-    }
+	}
 
 	private void drawContour(MatOfPoint contour, Mat smallFrame, int handIndex) {
 		Moments p = Imgproc.moments(contour);
