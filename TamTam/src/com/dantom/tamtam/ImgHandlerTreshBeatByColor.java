@@ -23,13 +23,13 @@ import android.util.Log;
  * This class is using threshold to detect hands,  and find the moment of impact(with the virtual drum) 
  * by calculating the size of each hand.
  */
-public class ImgHandlerTreshHSV implements CvCameraViewListener2 {
+public class ImgHandlerTreshBeatByColor implements CvCameraViewListener2 {
 	
 	// The tag of the logging of this class
 	final static String TAG = "tam";
 	
 	//The minimal diff in hand size, before updating the hand size.
-	private static final double CONTOUR_SIZE_DIFF_TRESHOLD = 150;
+	private static final double CONTOUR_MEAN_DIFF_TRESHOLD = 15;
 	
 	// The frame took from the camera
 	private Mat frameRGBA;
@@ -41,7 +41,7 @@ public class ImgHandlerTreshHSV implements CvCameraViewListener2 {
 	private Context c;
 
 	// This array uses to save the hands sizes between to different frames.
-	private double[] sizes = {0, 0};
+	private double[] distances = {0, 0};
 	
 	// This array is used to save the current direction of each hand, true means down.
 	private boolean[] directions = {false, false};
@@ -57,7 +57,7 @@ public class ImgHandlerTreshHSV implements CvCameraViewListener2 {
 	 * 
 	 * @param c The context of the main activity, used to play the drum sounds.
 	 */
-	public ImgHandlerTreshHSV(Context c){
+	public ImgHandlerTreshBeatByColor(Context c){
 		this.c = c;
 	}
 	
@@ -99,12 +99,14 @@ public class ImgHandlerTreshHSV implements CvCameraViewListener2 {
 		
 		updateHands(smallFrame, maxCnt, contours);
 		
-		drawContours(smallFrame, contours);
 		
-        imageResizer.rescaleImage(t, frameRGBA);
+		Mat white = new Mat(smallFrame.size(), smallFrame.type(), new Scalar(255, 255, 255));
+		drawContours(white, contours);
+		
+        imageResizer.rescaleImage(white, frameRGBA);
     }
 
-	private Mat handSegmentatoin2(Mat smallFrame) {
+	private Mat handSegmentatoin(Mat smallFrame) {
 		Mat result = new Mat();
 		Imgproc.cvtColor(smallFrame, result , Imgproc.COLOR_RGBA2GRAY);
     	
@@ -116,7 +118,7 @@ public class ImgHandlerTreshHSV implements CvCameraViewListener2 {
 		return result;
 	}
 	
-	private Mat handSegmentatoin(Mat smallFrame) {
+	private Mat handSegmentatoin3(Mat smallFrame) {
 		Mat tmp = new Mat();
 		Imgproc.cvtColor(smallFrame, tmp , Imgproc.COLOR_RGBA2RGB);
 		
@@ -143,40 +145,44 @@ public class ImgHandlerTreshHSV implements CvCameraViewListener2 {
 	private void updateHands(Mat smallFrame, MatOfPoint[] maxCnt,
 			MatOfPoint[] contours) {
 		
-//		if (maxCnt[0]  != null) {
-//			Mat mask = Mat.zeros(smallFrame.size(), CvType.CV_8UC(1));
-//			List<MatOfPoint> contorsToDraw = new ArrayList<MatOfPoint>();
-//			contorsToDraw.add(maxCnt[0]);
-//			Imgproc.drawContours(mask, contorsToDraw, 0, new Scalar(255), Core.FILLED);
-//			
-//			Scalar mean = Core.mean(smallFrame, mask);
-//			Log.i(TAG, mean.toString());
-//		}
-		
 		if (maxCnt[0]  != null) {
-			double area = Imgproc.contourArea(maxCnt[0]);
+			Mat mask = Mat.zeros(smallFrame.size(), CvType.CV_8UC(1));
+			List<MatOfPoint> contorsToDraw = new ArrayList<MatOfPoint>();
+			contorsToDraw.add(maxCnt[0]);
+			Imgproc.drawContours(mask, contorsToDraw, 0, new Scalar(255), Core.FILLED);
+			
+			Scalar mean = Core.mean(smallFrame, mask);
+			
 			Moments p = Imgproc.moments(maxCnt[0]);
 			int x = (int) (p.get_m10() / p.get_m00());
 	        int w = smallFrame.width();
+	        
 	        if (x < w/2) {
 	        	contours[0] = maxCnt[0];
-	        	updateHand(area,0);
+	        	updateHand(mean,0);
 	        } else {
 	        	contours[1] = maxCnt[0];
-	        	updateHand(area,1);
+	        	updateHand(mean,1);
 	        }
 		}
 		if (maxCnt[1]  != null) {
-			double area = Imgproc.contourArea(maxCnt[1]);
+			Mat mask = Mat.zeros(smallFrame.size(), CvType.CV_8UC(1));
+			List<MatOfPoint> contorsToDraw = new ArrayList<MatOfPoint>();
+			contorsToDraw.add(maxCnt[0]);
+			Imgproc.drawContours(mask, contorsToDraw, 0, new Scalar(255), Core.FILLED);
+			
+			Scalar mean = Core.mean(smallFrame, mask);
+			
 			Moments p = Imgproc.moments(maxCnt[1]);
 			int x = (int) (p.get_m10() / p.get_m00());
 	        int w = smallFrame.width();
+	        
 	        if (x < w/2) {
         		contours[0] = maxCnt[1];
-        		updateHand(area, 0);
+        		updateHand(mean, 0);
 	        } else {
 	        	contours[1] = maxCnt[1];
-	        	updateHand(area, 1);
+	        	updateHand(mean, 1);
 	        }
 		}
 	}
@@ -185,12 +191,12 @@ public class ImgHandlerTreshHSV implements CvCameraViewListener2 {
 		if (contours[0] != null) {
 			drawContour(contours[0],frame, 0);
 		} else {
-			sizes[0] = 0;
+			distances[0] = 0;
 		}
 		if (contours[1] != null) {
 			drawContour(contours[1],frame, 1);
 		} else {
-			sizes[1] = 0;
+			distances[1] = 0;
 		}
 	}
 
@@ -207,15 +213,30 @@ public class ImgHandlerTreshHSV implements CvCameraViewListener2 {
 		Imgproc.drawContours(smallFrame, contorsToDraw, 0, colors[handIndex], 1);
 	}
 
-	private void updateHand(double maxArea, int i) {
-    	if (Math.abs(sizes[i] - maxArea) > CONTOUR_SIZE_DIFF_TRESHOLD) {
-    		if (sizes[i] > maxArea) {
+	private double distance(Scalar point) {
+		double xd = Math.pow(255 - point.val[0], 2); 
+		double yd = Math.pow(255 - point.val[1], 2);
+		double zd = Math.pow(255 - point.val[2], 2);
+		
+		return Math.sqrt(xd + yd + zd);		
+	}
+	
+	private void updateHand(Scalar mean, int i) {
+		double d = distance(mean);
+		if (i == 1) {
+			Log.d(TAG, "h1 " + d );
+		} else {
+			Log.d(TAG, "h0 " + d );
+		}
+		
+    	if (Math.abs(distances[i] - d) > CONTOUR_MEAN_DIFF_TRESHOLD) {
+    		if (distances[i] < d) {
     			directions[i] = true;
     		} else if (directions[i]) {
     			Utils.PlaySound(drums[i], c);
     			directions[i] = false;
     		}
-    		sizes[i] = maxArea;
+    		distances[i] = d;
     	}
 	}
 	
