@@ -1,0 +1,13 @@
+About the Code Structure
+=========================
+
+The app is ``Tamtam`` folder. The main activity is at `TamTamMainActivity.java`. The "interesting code" which perform the 
+Image processing part is an implementation of CvCameraViewListener2, a callback which called for each frame in a video stream.
+There are several implementations left in the code form previous experiments we did but the version that is actually used is 
+at `ImgHandlerTresh.java`.
+The other implementations left in the code as reference to the way we made during the development and as place for us to found source 
+samples for correct OpenCV usage in Java.
+
+Under the folder ``experiments`` we saved ipython notebook contains early sketches of our algorithm + some videos that we 
+used for testing during the development.
+There is detailed README.txt there that can be used in order to set-up experiments environment as we used.
